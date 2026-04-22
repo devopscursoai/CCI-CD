@@ -1,0 +1,17 @@
+trigger:
+- main
+
+pool:
+  name: Default
+
+steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '8.x'
+
+- script: dotnet build
+  displayName: Build
+
+- script: dotnet test
+  displayName: Test

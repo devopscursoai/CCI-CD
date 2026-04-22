@@ -7,11 +7,17 @@ trigger:
 - main
 
 pool:
-  vmImage: default
-
-variables:
-  buildConfiguration: 'Release'
+  name: Default   # ← your self-hosted agent
 
 steps:
-- script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'dotnet build $(buildConfiguration)'
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '8.x'
+
+- script: dotnet build
+  displayName: Build
+
+- script: dotnet test
+  displayName: Test
+

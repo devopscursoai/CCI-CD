@@ -4,45 +4,54 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
 trigger:
-- main
+  branches:
+    include:
+    - main
 
-pool:
-  name: Default   # ← your self-hosted agent
+stages:
+- stage: __default
+  jobs:
+  - job: Job
+    pool:
+      name: Default
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        packageType: 'sdk'
+        version: '8.x'
 
-steps:
-- task: UseDotNet@2
-  inputs:
-    packageType: 'sdk'
-    version: '8.x'
+    - task: CmdLine@2
+      displayName: Build
+      inputs:
+        script: dotnet build
 
-- script: dotnet build
-  displayName: Build
+    - task: CmdLine@2
+      displayName: Test
+      inputs:
+        script: dotnet test
 
-- script: dotnet test
-  displayName: Test
+    # Build Docker image
+    - task: Docker@2
+      displayName: Build Docker image
+      inputs:
+        command: build
+        Dockerfile: '**/Dockerfile'
+        repository: donlyone/myproject   # ← CHANGE WAS HERE
+        tags: |
+          latest
 
-# Build Docker image
-- task: Docker@2
-  displayName: Build Docker image
-  inputs:
-    command: build
-    Dockerfile: '**/Dockerfile'
-    repository: /donlyonemyproject
-    tags: |
-      latest
+    # Login to Docker Hub
+    - task: Docker@2
+      displayName: Login to Docker Hub
+      inputs:
+        command: login
+        containerRegistry: dockerhub-connection
 
-# Login to Docker Hub
-- task: Docker@2
-  displayName: Login to Docker Hub
-  inputs:
-    command: login
-    containerRegistry: dockerhub-connection
-
-# Push image to Docker Hub
-- task: Docker@2
-  displayName: Push Docker image
-  inputs:
-    command: push
-    repository: /donlyonemyproject
-    tags: |
-      latest
+    # Push Docker image
+    - task: Docker@2
+      displayName: Push Docker image
+      inputs:
+        command: push
+        repository: donlyone/myproject   # ← AND HERE
+        tags: |
+          latest
